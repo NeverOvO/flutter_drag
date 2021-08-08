@@ -2,15 +2,63 @@
 
 Flutter拖动组件的开发
 
-## Getting Started
+核心代码
+    
+    /*
+    实际拖动组件，可以在里面任何东西，例如菜单，标题，分割线，或者是被拖动的组件，例子中为高度的改变
+    onVerticalDragDown：记录下当拖动开始时组件的高度，赋值给_drageWidgetHeightTemp；
+    onVerticalDragUpdate：
+          因为实时变动高度，所以高度的赋值需要在Update中进行
+          这里的hi值，用来记录组件在拖动过程时的高度变化，若小于自定义最低高度，则不再进行更新，
+          hi > (MediaQuery.of(context).size.height / 1.5) 则是对最高高度的显示，可以根据实际需要动态调整
+          (s.localPosition.dy - 10) ：这里是为了避免在鼠标按下去刚开始拖动时出现的闪动情况，个人感觉取值10-20较为合适
+    onVerticalDragEnd ：拖动结束后将目前高度赋值给赋值给_drageWidgetHeightTemp，可以不写
+     */
+     
+     Widget _dragWidgetHead(){
+    return GestureDetector(
+      child: Container(
+        child: Row(
+          children: [
+            Expanded(
+              child: Text("拖动此处"),
+            ),
+            IconButton(
+              icon: Icon(_drageWidgetShow ? Icons.keyboard_arrow_down_rounded : Icons.keyboard_arrow_up_rounded),
+              onPressed: (){
+                setState(() {
+                  _drageWidgetShow = !_drageWidgetShow;
+                });
+              },
+            ),
+          ],
+        ),
+        color: Colors.deepPurpleAccent,
+        alignment: Alignment.center,
+      ),
+      behavior: HitTestBehavior.opaque,
+      onVerticalDragDown: (s){
+        _drageWidgetHeightTemp =  _drageWidgetHeight;
+      },
+      onVerticalDragUpdate: (s){
+        if(_drageWidgetShow){ //屏蔽在组件隐藏时的拖动动作
+          setState(() {
+            double hi = _drageWidgetHeightTemp - (s.localPosition.dy - 10);
+            if(hi < 120){
+              _drageWidgetHeight = 120;
+            }else if (hi > (MediaQuery.of(context).size.height / 1.5)){
+              _drageWidgetHeight = MediaQuery.of(context).size.height / 1.5;
+            }else{
+              _drageWidgetHeight = _drageWidgetHeightTemp - (s.localPosition.dy - 10);
+            }
 
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
-
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+          });
+        }
+      },
+      onVerticalDragEnd: (s){
+        setState(() {
+          _drageWidgetHeightTemp =  _drageWidgetHeight;
+        });
+      },
+    );
+   
